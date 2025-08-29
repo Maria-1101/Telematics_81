@@ -14,24 +14,29 @@ const db = admin.database();
 
 app.post('/thingspeak-webhook', async (req, res) => {
   try {
-    const { field1, field2 } = req.body; // ThingSpeak sends data here
-    
-    if (field1 && field2) {
+    let { field1, field2 } = req.body;
+
+    // Convert fields to numbers explicitly
+    const latitude = Number(field1);
+    const longitude = Number(field2);
+
+    if (!isNaN(latitude) && !isNaN(longitude)) {
       await db.ref('HomeFragment').set({
-        Latitude: field1,
-        Longitude: field2,
+        Latitude: latitude,
+        Longitude: longitude,
         updatedAt: Date.now()
       });
-      console.log('Firebase updated from webhook:', field1, field2);
+      console.log('Firebase updated from webhook:', latitude, longitude);
       res.status(200).send('Firebase updated');
     } else {
-      res.status(400).send('Missing fields');
+      res.status(400).send('Invalid latitude or longitude');
     }
   } catch (error) {
     console.error('Error updating Firebase:', error);
     res.status(500).send('Internal server error');
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
