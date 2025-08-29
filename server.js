@@ -21,7 +21,7 @@ app.post('/thingspeak-webhook', async (req, res) => {
     const longitude = Number(field2);
 
     if (!isNaN(latitude) && !isNaN(longitude)) {
-      await db.ref('HomeFragment').set({
+      await db.ref('HomeFragment').update({
         Latitude: latitude,
         Longitude: longitude,
         updatedAt: Date.now()
