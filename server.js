@@ -1,12 +1,13 @@
 const express = require('express');
 const admin = require('firebase-admin');
 const app = express();
+const serviceAccount = JSON.parse(process.env.SERVICEACCOUNTKEY);
 
 app.use(express.json()); // to parse JSON body
 
 admin.initializeApp({
-  credential: admin.credential.cert(require('./serviceAccountKey.json')),
-  databaseURL: "https://telematics81-default-rtdb.firebaseio.com/"
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: process.env.FIREBASE_DATABASE_URL
 });
 
 const db = admin.database();
