@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "972815533661",
+    "project_id": "telematics81",
+    "storage_bucket": "telematics81.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:972815533661:android:4f004b1faf2b8d67f7afb4",
+        "android_client_info": {
+          "package_name": "com.telematics_81"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOiMrHxDGi-JmK_Xtx0mJSOfX_yqSVwCo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
