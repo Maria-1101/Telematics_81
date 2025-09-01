@@ -54,7 +54,7 @@ async function pollAndUpdateFirebase() {
 }
 
 // Start polling loop
-setInterval(pollAndUpdateFirebase, 60000); // every 60 seconds
+setInterval(pollAndUpdateFirebase, 15000); // every 60 seconds
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
