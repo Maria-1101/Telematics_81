@@ -1,38 +1,62 @@
 const express = require('express');
 const admin = require('firebase-admin');
+const fetch = require('node-fetch'); // npm install node-fetch@2
 const app = express();
 
-app.use(express.json()); // to parse JSON body
+const serviceAccount = JSON.parse(process.env.SERVICEACCOUNTKEY);
+
+app.use(express.json());
 
 admin.initializeApp({
-  credential: admin.credential.cert(require('./serviceAccountKey.json')),
-  databaseURL: "https://telematics81-default-rtdb.firebaseio.com/"
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: process.env.FIREBASE_DATABASE_URL
 });
 
 const db = admin.database();
 
-app.post('/thingspeak-webhook', async (req, res) => {
+// Function to fetch latest ThingSpeak data
+async function fetchLatestThingSpeak(channelId, readApiKey) {
+  const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${readApiKey}&results=1`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (data && data.feeds && data.feeds.length) {
+    const latestFeed = data.feeds[0];
+    const latitude = Number(latestFeed.field1);
+    const longitude = Number(latestFeed.field2);
+    return { latitude, longitude };
+  }
+  throw new Error('No data found in ThingSpeak channel');
+}
+
+// Poll ThingSpeak every 1 minute to update Firebase
+async function pollAndUpdateFirebase() {
   try {
-    const { field1, field2 } = req.body; // ThingSpeak sends data here
-    
-    if (field1 && field2) {
-      await db.ref('HomeFragment').set({
-        Latitude: field1,
-        Longitude: field2,
+    const channelId = 'YOUR_CHANNEL_ID';        // Replace with your channel ID
+    const readApiKey = 'YOUR_READ_API_KEY';     // Remove if channel is public
+
+    const { latitude, longitude } = await fetchLatestThingSpeak(channelId, readApiKey);
+    console.log(`Fetched coordinates: ${latitude}, ${longitude}`);
+
+    if (!isNaN(latitude) && !isNaN(longitude)) {
+      await db.ref('HomeFragment').update({
+        Latitude: latitude,
+        Longitude: longitude,
         updatedAt: Date.now()
       });
-      console.log('Firebase updated from webhook:', field1, field2);
-      res.status(200).send('Firebase updated');
+      console.log('Firebase updated with latest ThingSpeak data');
     } else {
-      res.status(400).send('Missing fields');
+      console.warn('Invalid lat/lng fetched from ThingSpeak');
     }
   } catch (error) {
-    console.error('Error updating Firebase:', error);
-    res.status(500).send('Internal server error');
+    console.error('Error polling ThingSpeak or updating Firebase:', error);
   }
-});
+}
+
+// Start polling loop
+setInterval(pollAndUpdateFirebase, 60000); // every 60 seconds
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Webhook server running on port ${PORT}`);
+  console.log(`Server running and polling ThingSpeak on port ${PORT}`);
 });

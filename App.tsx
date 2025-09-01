@@ -218,13 +218,15 @@ export default function App() {
       const data = snapshot.val();
       logDebug('Firebase data:', data);
 
-      const lat = data?.Latitude;
-      const lng = data?.Longitude;
+      const lat = Number(data?.Latitude);
+      const lng = Number(data?.Longitude);
       const ignition = data?.IgnitionStatus;
+
+      logDebug(`Latitude: ${lat} Longitude: ${lng}`);
 
       setLatestIgnition(ignition);
 
-      if (typeof lat === 'number' && typeof lng === 'number') {
+       if (!isNaN(lat) && !isNaN(lng)) {
         if (ignition === 1) {
           // Ignition ON: update location
           lastLocationRef.current = [lng, lat];          // Remember latest ON position
