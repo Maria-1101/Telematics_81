@@ -22,8 +22,8 @@ async function fetchLatestThingSpeak(channelId, readApiKey) {
 
   if (data && data.feeds && data.feeds.length) {
     const latestFeed = data.feeds[0];
-    const latitude = Number(latestFeed.field1);
-    const longitude = Number(latestFeed.field2);
+    const latitude = Number(latestFeed.field7);
+    const longitude = Number(latestFeed.field8);
     return { latitude, longitude };
   }
   throw new Error('No data found in ThingSpeak channel');
