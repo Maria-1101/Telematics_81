@@ -32,8 +32,8 @@ async function fetchLatestThingSpeak(channelId, readApiKey) {
 // Poll ThingSpeak every 1 minute to update Firebase
 async function pollAndUpdateFirebase() {
   try {
-    const channelId = 'YOUR_CHANNEL_ID';        // Replace with your channel ID
-    const readApiKey = 'YOUR_READ_API_KEY';     // Remove if channel is public
+    const channelId = '3052335';        // Replace with your channel ID
+    const readApiKey = 'PH1AC0E950KHP14J';     // Remove if channel is public
 
     const { latitude, longitude } = await fetchLatestThingSpeak(channelId, readApiKey);
     console.log(`Fetched coordinates: ${latitude}, ${longitude}`);
