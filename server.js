@@ -38,11 +38,21 @@ async function pollAndUpdateFirebase() {
     const { latitude, longitude } = await fetchLatestThingSpeak(channelId, readApiKey);
     console.log(`Fetched coordinates: ${latitude}, ${longitude}`);
 
+    const now = new Date();
+    const formattedTime = now.toLocaleString('en-IN', {
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      hour12: true,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
     if (!isNaN(latitude) && !isNaN(longitude)) {
       await db.ref('HomeFragment').update({
         Latitude: latitude,
         Longitude: longitude,
-        updatedAt: Date.now()
+        updatedAt: formattedTime
       });
       console.log('Firebase updated with latest ThingSpeak data');
     } else {
