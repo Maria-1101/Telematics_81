@@ -69,7 +69,8 @@ async function checkAndUpdateFirebase() {
       hour12: true,
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'Asia/Kolkata'
     });
     
     if (!isNaN(latitude) && !isNaN(longitude)) {
