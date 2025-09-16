@@ -25,8 +25,8 @@ async function fetchLatestThingSpeak(channelId, readApiKey) {
   if (data && data.feeds && data.feeds.length) {
     const latestFeed = data.feeds[0];
     const entryId = latestFeed.entry_id;
-    const latitude = Number(latestFeed.field7);
-    const longitude = Number(latestFeed.field8);
+    const latitude = Number(latestFeed.field8);
+    const longitude = Number(latestFeed.field7);
     
     return { 
       entryId, 
