@@ -31,9 +31,6 @@ const logMemoryUsage = () => {
   return rssMemoryMB;
 };
 
-// Log memory usage every 5 minutes
-const memoryInterval = setInterval(logMemoryUsage, 5 * 60 * 1000);
-
 // ✅ VALIDATE ENVIRONMENT VARIABLES ON STARTUP
 function validateEnvironment() {
   const required = ['SERVICEACCOUNTKEY', 'FIREBASE_DATABASE_URL'];
@@ -76,6 +73,34 @@ let globalErrorCount = 0;
 let lastSuccessTime = new Date();
 let isShuttingDown = false;
 let currentInterval = CONFIG.CHECK_INTERVAL;
+
+// ✅ INTERVAL VARIABLES (Declare at top level for proper cleanup)
+let mainIntervalId;
+let memoryInterval;
+let keepAliveInterval;
+
+// ✅ KEEP-ALIVE MECHANISM
+const KEEP_ALIVE_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
+async function keepAlive() {
+  if (isShuttingDown) return;
+  
+  try {
+    const appUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3000}`;
+    console.log('🏃 Keep-alive ping...');
+    
+    const response = await fetch(`${appUrl}/health`, {
+      timeout: 5000,
+      headers: { 'User-Agent': 'KeepAlive-Internal' }
+    });
+    
+    if (response.ok) {
+      console.log('✅ Keep-alive successful');
+    }
+  } catch (error) {
+    console.log('⚠️ Keep-alive failed (not critical):', error.message);
+  }
+}
 
 // ✅ EXPONENTIAL BACKOFF IMPLEMENTATION
 function calculateBackoffDelay() {
@@ -328,6 +353,16 @@ app.get('/', (req, res) => {
   `);
 });
 
+// ✅ DYNAMIC INTERVAL MANAGEMENT
+function resetMainInterval() {
+  if (mainIntervalId) {
+    clearInterval(mainIntervalId);
+  }
+  
+  mainIntervalId = setInterval(checkAndUpdateFirebase, currentInterval);
+  console.log(`🔄 Interval reset to ${currentInterval/1000} seconds`);
+}
+
 // ✅ GRACEFUL SHUTDOWN - SINGLE HANDLER
 let shutdownInitiated = false;
 
@@ -349,6 +384,11 @@ function initiateGracefulShutdown(signal) {
     console.log('✅ Stopped memory monitoring');
   }
   
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+    console.log('✅ Stopped keep-alive');
+  }
+  
   // Close server gracefully
   server.close((err) => {
     if (err) {
@@ -368,7 +408,7 @@ function initiateGracefulShutdown(signal) {
   }, 10000);
 }
 
-// ✅ HANDLE SIGNALS
+// ✅ HANDLE SIGNALS (Single handlers only)
 process.on('SIGTERM', () => initiateGracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => initiateGracefulShutdown('SIGINT'));
 
@@ -385,18 +425,6 @@ process.on('unhandledRejection', (reason, promise) => {
   // Don't exit - try to continue
 });
 
-// ✅ DYNAMIC INTERVAL MANAGEMENT
-let mainIntervalId;
-
-function resetMainInterval() {
-  if (mainIntervalId) {
-    clearInterval(mainIntervalId);
-  }
-  
-  mainIntervalId = setInterval(checkAndUpdateFirebase, currentInterval);
-  console.log(`🔄 Interval reset to ${currentInterval/1000} seconds`);
-}
-
 // Monitor for interval changes and reset as needed
 let lastIntervalCheck = currentInterval;
 setInterval(() => {
@@ -412,6 +440,15 @@ console.log('🚀 Starting Telematics Service...');
 console.log(`⏱️ Check interval: ${CONFIG.CHECK_INTERVAL/1000} seconds`);
 console.log(`🛡️ Max consecutive errors: ${CONFIG.MAX_CONSECUTIVE_ERRORS}`);
 console.log(`⏰ Request timeout: ${CONFIG.REQUEST_TIMEOUT/1000} seconds`);
+
+// Start memory monitoring
+memoryInterval = setInterval(logMemoryUsage, 5 * 60 * 1000);
+
+// Start keep-alive only in production
+if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+  console.log('🛡️ Starting keep-alive mechanism (10 min intervals)');
+  keepAliveInterval = setInterval(keepAlive, KEEP_ALIVE_INTERVAL);
+}
 
 // Initial checks
 logMemoryUsage();
