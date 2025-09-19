@@ -260,7 +260,7 @@ async function updateFirebaseWithRetry(data, retryAttempt = 0) {
   const maxRetries = 3;
   
   try {
-    await db.ref('HomeFragment').update(data);
+    await db.ref('HomeFragment/UserID1').update(data);
   } catch (error) {
     if (retryAttempt < maxRetries) {
       const retryDelay = 2000 * (retryAttempt + 1);
